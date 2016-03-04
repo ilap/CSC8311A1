@@ -2,8 +2,9 @@ from django.conf.urls import url
 
 from . import views
 
+app_name = 'grna'
 urlpatterns = [
-    # ex: /polls/
+    # ex: /grna/
     url(r'^$', views.index, name='index'),
     # ex: /grna/5/
     url(r'^(?P<question_id>[0-9]+)/$', views.detail, name='detail'),
