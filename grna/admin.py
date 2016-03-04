@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import GuideRNA
+from .models import *
 
 admin.site.register(GuideRNA)
+admin.site.register(Question)
