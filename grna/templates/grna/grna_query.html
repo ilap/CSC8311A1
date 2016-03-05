@@ -1,0 +1,59 @@
+{% extends 'grna/base.html' %}
+
+{% block content %}
+<form id="query_form" class="form-horizontal">
+    <div class="form-group">
+        <label class="col-md-3 control-label">Species:</label>
+        <div class="col-md-4">
+            <input type="text" class="form-control" name="species" placeholder="Species name" />
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-md-3 control-label">Target type</label>
+        <div class="col-md-6">
+            <textarea class="form-control" rows="5" id="sequence"></textarea>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-md-3 control-label">Upstream/Downstream:</label>
+        <div class="col-md-2">
+            <label for="up">Upstream:</label>
+            <input type="number" value="2000" step="100" max="10000" min="0" class="form-control" id="up">
+        </div>
+        <div class="col-md-2">
+            <label for="down">Downstream:</label>
+            <input type="number" value="2000" step="100" max="10000" min="0" class="form-control" id="down">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-md-3 control-label">PAM:</label>
+        <div class="col-md-3">
+            <select class="form-control" id="sel1">
+                <option>NGG</option>
+                <option>NGG or NAG</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="col-md-3 control-label">Cas9 type</label>
+        <div class="col-md-3">
+            <div class="radio">
+                <label><input type="radio" name="cas_type" checked>Nickase</label>
+            </div>
+            <div class="radio">
+                <label><input type="radio" name="cas_type">Wild type</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="col-md-9 col-md-offset-3">
+            <button type="submit" class="btn btn-primary" name="search" value="Search">Search</button>
+        </div>
+    </div>
+</form>
+{% endblock %}

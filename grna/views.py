@@ -6,6 +6,10 @@ from django.template import loader
 
 from .models import *
 
+def grna_query (request):
+    return render (request, 'grna/grna_query.html', {})
+
+
 def index(request):
     latest_question_list = Question.objects.order_by('-pub_date')[:5]
     template = loader.get_template('grna/index.html')
