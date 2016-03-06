@@ -1,22 +1,43 @@
 {% extends 'grna/base.html' %}
 
 {% block content %}
-<form id="query_form" class="form-horizontal" action="/results/" method="post">
+
+<!-- # Upload file form, planned for the future features...
+    <form  method="post" enctype="multipart/form-data">
     {% csrf_token %}
+    <p>{{ form.non_field_errors }}</p>
+    <p>{{ form.fasta_file.label_tag }}</p>
+    <p>{{ form.fasta_file.help_text }}</p>
+    <p>{{ form.fasta_file.errors }}</p>
+    <p>{{ form.fasta_file }}</p>
+    <p><input type="submit" value="Upload"/></p>
+</form>
+-->
+
+<form id="query_form" class="form-horizontal" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <!-- Species selection list -->
     <div class="form-group">
         <label class="col-md-3 control-label">Species:</label>
-        <div class="col-md-4">
-            <input type="text" class="form-control" id="species" name="species" placeholder="Species name" />
+        <div class="col-md-3">
+            <select class="form-control" name="select" id="pam">
+                {% for s in species %}
+                <option>{{ s.name }}</option>
+                {% endfor %}
+            </select>
         </div>
     </div>
 
+    <!-- Target type, currently only nucleotides are supported -->
     <div class="form-group">
-        <label class="col-md-3 control-label">Target type</label>
+        <label class="col-md-3 control-label">Target sequence:</label>
         <div class="col-md-6">
             <textarea name="target" type="textare" class="form-control" rows="5" cols="40" id="sequence"></textarea>
         </div>
     </div>
 
+    <!-- upstream and downstream extension for the DNA sequence to search
+    gRNA only in that region -->
     <div class="form-group">
         <label class="col-md-3 control-label">Upstream/Downstream:</label>
         <div class="col-md-2">
@@ -28,17 +49,19 @@
             <input type="number" value="2000" step="100" max="10000" min="0" class="form-control" name="downstream" id="downstream">
         </div>
     </div>
-
+    <!-- PAM for searching gRNA -->
     <div class="form-group">
         <label class="col-md-3 control-label">PAM:</label>
         <div class="col-md-3">
             <select class="form-control" name="select" id="pam">
-                <option>NGG</option>
-                <option>NGG or NAG</option>
+                {% for pam in pams %}
+                <option>{{ pam.pam }}</option>
+                {% endfor %}
             </select>
         </div>
     </div>
 
+    <!-- Nickase of wild-type -->
     <div class="form-group">
         <label class="col-md-3 control-label">Cas9 type</label>
         <div class="col-md-3">
