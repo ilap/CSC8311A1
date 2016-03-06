@@ -1,22 +1,85 @@
 from __future__ import unicode_literals
 from django.db import models
+from django.core.files.storage import FileSystemStorage
+from django.core.validators import MinValueValidator
+
+tfs = FileSystemStorage(location='grna/targets')
+gfs = FileSystemStorage(location='grna/genomes')
+
 
 # Create your models here.
+# Target sequence to find gRNA in a genome of a species
+class Target(models.Model):
+    name = models.CharField(max_length=100)
+    # Target sequence in FASTA, e.g. gene, manually uploaded sequence, or
+    # sequence from offsets of genome
+    sequence_file = models.FileField(storage=tfs)
+    # Target position in species if exists
+    position = models.IntegerField(validators=[MinValueValidator(-1)])
 
+    # If the Target is found in the genome of species, then it specifies
+    # the extension of the sequence to find gRNA in the extended target
+    # by the up/down stream.
+    upstream = models.PositiveIntegerField(validators=[MinValueValidator(0)])
+    downstream = models.PositiveIntegerField(validators=[MinValueValidator(0)])
+
+    def __str__(self):
+        return self.name
+
+
+# Genome of a species to find gRNAs by target sequence(s)
+class Species(models.Model):
+    name = models.CharField(max_length=100)
+    fasta_file = models.FileField(storage=gfs)
+    genbank_file = models.FileField(storage=gfs)
+    # Sequence length
+    length = models.PositiveIntegerField()
+
+    def __str__(self):
+        return self.name
+
+
+# Model for CRISPR/Cas9 or CRISPR/Cpf1 endonucleases
+class Nuclease(models.Model):
+    name = models.CharField(max_length=10, default='Cas9')
+    is_nickase = models.BooleanField(default=True)
+
+    is_downstream = models.BooleanField(default=True)
+    cut_offset = models.PositiveIntegerField(validators=[MinValueValidator(
+        1)], null=True)
+
+    def __str__(self):
+        return self.name
+
+
+# Model for PAM (Protospacer Adjacent Motif)
+class PAM(models.Model):
+    nuclease = models.ForeignKey(Nuclease)
+    pam = models.CharField(max_length=20)
+
+    class Meta:
+        unique_together = (("nuclease", "pam"),)
+
+    def __str__(self):
+        return self.pam
+
+
+# Model for gRNAs
 class GuideRNA(models.Model):
-	species = models.CharField(max_length=200)
+    species = models.ForeignKey(Species, null=True)
+    target = models.ForeignKey(Target, null=True)
+    pam = models.ForeignKey(PAM, null=True)
+    nuclease = models.ForeignKey(Nuclease, null=True)
 
-	target = models.CharField(max_length=2000)
+    grna = models.CharField(max_length=20, null=True)
 
+    # Position of found gRNA in Genome and/or Target sequence.
+    genome_position = models.BigIntegerField(default=-1, null=True)
+    target_position = models.BigIntegerField(default=-1, null=True)
 
-	upstream = models.CharField(max_length=10)
-	downtream = models.CharField(max_length=10)
+    class Meta:
+        unique_together = (("species", "nuclease", "target",
+                            "pam"),)
 
-	pam = models.CharField(max_length=10)
-	cas_type = models.CharField(max_length=10)
-
-	def __str__(self):
-		return self.species
-
-
-
+    def __str__(self):
+        return self.grna
