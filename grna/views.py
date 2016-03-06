@@ -2,7 +2,6 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 
-<<<<<<< HEAD
 from .forms import *
 from .models import *
 
@@ -37,18 +36,11 @@ def grna_new(request):
         print pams
 
         return render(request, 'grna/grna_new.html', {'form': form,
-                                                  'species': species,
-                                                  'nucleases': nucleases,
-                                                  'pams': pams, })
+                                                      'species': species,
+                                                      'nucleases': nucleases,
+                                                      'pams': pams, })
 
 
-=======
-
-def grna_new(request):
-    return render(request, 'grna/grna_new.html', {})
-
-
->>>>>>> origin/master
 def grna_results(request):
     if request.method == "POST":
 

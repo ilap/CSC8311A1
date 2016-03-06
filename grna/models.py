@@ -29,11 +29,8 @@ class Target(models.Model):
 
 # Genome of a species to find gRNAs by target sequence(s)
 class Species(models.Model):
-<<<<<<< HEAD
+
     name = models.CharField(max_length=100,unique=True)
-=======
-    name = models.CharField(max_length=100)
->>>>>>> origin/master
     fasta_file = models.FileField(storage=gfs)
     genbank_file = models.FileField(storage=gfs)
     # Sequence length
