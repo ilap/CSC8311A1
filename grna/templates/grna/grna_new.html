@@ -14,15 +14,16 @@
 </form>
 -->
 
-<form id="query_form" class="form-horizontal" method="post" enctype="multipart/form-data">
+<form id="query_form" class="form-horizontal" method="post"
+      enctype="multipart/form-data">
     {% csrf_token %}
     <!-- Species selection list -->
     <div class="form-group">
         <label class="col-md-3 control-label">Species:</label>
         <div class="col-md-3">
-            <select class="form-control" name="select" id="pam">
+            <select class="form-control" name="species">
                 {% for s in species %}
-                <option>{{ s.name }}</option>
+                <option value="{{ s.id }}">{{ s.name }}</option>
                 {% endfor %}
             </select>
         </div>
@@ -32,7 +33,8 @@
     <div class="form-group">
         <label class="col-md-3 control-label">Target sequence:</label>
         <div class="col-md-6">
-            <textarea name="target" type="textare" class="form-control" rows="5" cols="40" id="sequence"></textarea>
+            <textarea name="target" class="form-control" rows="5"
+                      cols="40"></textarea>
         </div>
     </div>
 
@@ -41,23 +43,25 @@
     <div class="form-group">
         <label class="col-md-3 control-label">Upstream/Downstream:</label>
         <div class="col-md-2">
-            <label for="up">Upstream:</label>
-            <input type="number" value="2000" step="100" max="10000" min="0" class="form-control" name="upstream" id="upstream">
+            <label for="upstream">Upstream:</label>
+            <input type="number" class="form-control" name="upstream"
+                   id="upstream" value="2000" step="100" max="10000" min="0">
         </div>
         <div class="col-md-2">
-            <label for="down">Downstream:</label>
-            <input type="number" value="2000" step="100" max="10000" min="0" class="form-control" name="downstream" id="downstream">
+            <label for="downstream">Downstream:</label>
+            <input type="number" class="form-control" name="downstream"
+                   id="downstream" value="2000" step="100" max="10000" min="0">
         </div>
     </div>
     <!-- PAM for searching gRNA -->
     <div class="form-group">
         <label class="col-md-3 control-label">PAM:</label>
         <div class="col-md-3">
-            <select class="form-control" name="select" id="pam">
+            <select class="form-control" name="pam">
                 {% for pam in pams %}
-                <option>{{ pam.pam }}</option>
+                <option value="{{ pam.id }}">{{ pam.pam }}</option>
                 {% endfor %}
-                <option>Try all above </option>
+                <option value="-1">Try all of the above </option>
             </select>
         </div>
     </div>
@@ -67,17 +71,20 @@
         <label class="col-md-3 control-label">Cas9 type</label>
         <div class="col-md-3">
             <div class="radio">
-                <label><input type="radio"  id="nickase" value="NICK" name="cas_type" checked>Nickase</label>
+                <label><input type="radio" name="is_nickase" value=True
+                              checked>Nickase</label>
             </div>
             <div class="radio">
-                <label><input type="radio" id="wild_type" value="WILD" name="cas_type">Wild type</label>
+                <label><input type="radio" name="is_nickase" value=False
+                              disabled>Wild type</label>
             </div>
         </div>
     </div>
 
     <div class="form-group">
         <div class="col-md-9 col-md-offset-3">
-            <button type="submit" class="btn btn-primary" name="search" id="doit" value="doit">Search</button>
+            <button type="submit" class="btn btn-primary" name="search"
+                    value="doit">Search gRNA</button>
         </div>
     </div>
 </form>
