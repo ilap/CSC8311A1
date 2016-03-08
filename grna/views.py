@@ -1,11 +1,9 @@
 from django.shortcuts import render
 from django.views.generic import View
 
-from Bio import SeqIO
-
 from .forms import *
 from .models import *
-from .utils import GuideRNABioUtils
+from .utils import GuideRNAManager
 
 
 class GuideRNAView(View):
@@ -15,7 +13,7 @@ class GuideRNAView(View):
 
     def __init__(self):
         super(View, self).__init__()
-        self.grna_utils = GuideRNABioUtils()
+        self.grna_utils = GuideRNAManager()
 
     def get(self, request):
         print "GET request"
@@ -51,26 +49,9 @@ class GuideRNAView(View):
             for i in request.POST:
                 print "POOOOST:", i, request.POST[i]
 
-            species_id = request.POST['species']
-            target = request.POST['target']
-            pam_id = request.POST['pam']
-            upstream = request.POST['upstream']
-            downstream = request.POST['downstream']
-            is_nickase = request.POST['is_nickase']
+            grna_utils = GuideRNAManager().initialise_run(request)
 
-            # Create target model from the seqeuence
-            target_model = Target()
-            target_model.init_target(target, upstream, downstream)
-            species_model = Species.objects.get(pk=species_id)
-
-            grna_utils = GuideRNABioUtils()
-
-
-            print "MODEL:", species_model.fasta_file
-
-            content = grna_utils.run_blat(species_model.get_fasta_file(),
-                                          target_model.get_fasta_file())
-
+            content = grna_utils.search_grna()
             print "CONTENT: ", content
             return render(request, self.template_results, {'content':
                                                                content, })

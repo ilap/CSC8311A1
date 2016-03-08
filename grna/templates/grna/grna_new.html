@@ -1,7 +1,14 @@
 {% extends 'grna/base.html' %}
 
-{% block content %}
+{% block style %}
+{% endblock %}
 
+{% block content %}
+<script>
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip()
+})
+</script>
 <!-- # Upload file form, planned for the future features...
     <form  method="post" enctype="multipart/form-data">
     {% csrf_token %}
@@ -13,7 +20,12 @@
     <p><input type="submit" value="Upload"/></p>
 </form>
 -->
-
+<!-- Good infield and other examples
+http://codepen.io/willthemoor/pen/dooRag
+http://plnkr.co/edit/fAedI6CCurweavYN5iNS?p=preview
+http://getbootstrap.com/javascript/#tabs
+http://www.chidgilovitz.com/displaying-django-form-field-help-text-in-a-bootstrap-3-popover/
+-->
 <form id="query_form" class="form-horizontal" method="post"
       enctype="multipart/form-data">
     {% csrf_token %}
@@ -21,7 +33,9 @@
     <div class="form-group">
         <label class="col-md-3 control-label">Species:</label>
         <div class="col-md-3">
-            <select class="form-control" name="species">
+            <select class="form-control has-popover" name="species"
+                    data-content="Alma" data-placement="right"
+            data-container="body">
                 {% for s in species %}
                 <option value="{{ s.id }}">{{ s.name }}</option>
                 {% endfor %}
@@ -35,13 +49,17 @@
         <div class="col-md-6">
             <textarea name="target" class="form-control" rows="5"
                       cols="40"></textarea>
+            <p class="help-block">Only one nucleotide sequence in FASTA
+                format is allowed currently.</p>
         </div>
     </div>
 
     <!-- upstream and downstream extension for the DNA sequence to search
     gRNA only in that region -->
     <div class="form-group">
-        <label class="col-md-3 control-label">Upstream/Downstream:</label>
+        <label class="col-md-3 control-label">Search offset of target
+            in genome:</label>
+
         <div class="col-md-2">
             <label for="upstream">Upstream:</label>
             <input type="number" class="form-control" name="upstream"
@@ -52,7 +70,14 @@
             <input type="number" class="form-control" name="downstream"
                    id="downstream" value="2000" step="100" max="10000" min="0">
         </div>
+        <div class="col-md-4">
+            <p class="help-block">It extends the search range of the
+                target sequence in the genome by the specified offset
+                to search gRNA in that extended region.</p>
+        </div>
+
     </div>
+
     <!-- PAM for searching gRNA -->
     <div class="form-group">
         <label class="col-md-3 control-label">PAM:</label>
@@ -72,20 +97,24 @@
         <div class="col-md-3">
             <div class="radio">
                 <label><input type="radio" name="is_nickase" value=True
-                              checked>Nickase</label>
+                              data-toggle="tooltip" data-placement="right" title="Tooltip on right"
+                              disabled>Nickase</label>
             </div>
             <div class="radio">
                 <label><input type="radio" name="is_nickase" value=False
-                              disabled>Wild type</label>
+                              checked>Wild type</label>
             </div>
         </div>
     </div>
 
     <div class="form-group">
         <div class="col-md-9 col-md-offset-3">
-            <button type="submit" class="btn btn-primary" name="search"
-                    value="doit">Search gRNA</button>
+            <button type="submit" class="btn btn-info" name="search"
+                    value="doit" data-toggle="tooltip" data-placement="right"
+                    title="Search guide RNA in selected species.">Search
+                gRNA</button>
         </div>
     </div>
+<div>
 </form>
 {% endblock %}

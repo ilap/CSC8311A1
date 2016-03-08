@@ -22,8 +22,8 @@ class Target(models.Model):
     # sequence from offsets of genome
     sequence_file = models.FileField(storage=tfs)
 
-    # Target position in species if exists
-    position = models.IntegerField(validators=[MinValueValidator(-1)])
+    # Target length
+    length = models.BigIntegerField(default=-1, null=True)
 
     # If the Target is found in the genome of species, then it specifies
     # the extension of the sequence to find gRNA in the extended target
@@ -37,7 +37,6 @@ class Target(models.Model):
     def init_target(self, target, upstream, downstream):
         self.upstream = upstream
         self.downstream = downstream
-        self.position = -1
 
         # The file name would be the hash of the sequence. MD5 is suitable as
         # it is not for encrypting but for unique name for a file based on
@@ -63,9 +62,6 @@ class Target(models.Model):
 
         self.save()
 
-    def get_fasta_file(self):
-        return self.sequence_file.path
-
 
 # Genome of a species to find gRNAs by target sequence(s)
 class Species(models.Model):
@@ -78,12 +74,6 @@ class Species(models.Model):
 
     def __str__(self):
         return self.name
-
-    def get_fasta_file(self):
-        return self.fasta_file.path
-
-    def get_genbank_file(self):
-        return self.genbank_file.path
 
 
 # Model for CRISPR/Cas9 or CRISPR/Cpf1 endonucleases
@@ -111,22 +101,48 @@ class PAM(models.Model):
         return self.pam
 
 
-# Model for gRNAs
-class GuideRNA(models.Model):
+# Model for Target Hits in the genome
+class TargetHit(models.Model):
     species = models.ForeignKey(Species, null=True)
     target = models.ForeignKey(Target, null=True)
+
+    length = models.BigIntegerField(default=-1, null=True)
+
+    # Target position in genome of species if exists
+    position = models.BigIntegerField(default=-1, null=True, validators=[
+        MinValueValidator(-1)])
+
+    # Strand can be either plus, sense or coding strand (means 5' to 3' or
+    # minus, antisense or not coding strand
+    #
+    ORIENTATION = (
+        (1, 'Coding Strand'),
+        (-1, 'Template Strand')
+    )
+    strand = models.IntegerField(default=1, choices=ORIENTATION, null=True)
+
+    # Hit Score would be larger than 90% as BLAT default value for search
+    # TODO: Parameterise this property in start page
+    score = models.FloatField(default=0.9, null=True)
+
+    class Meta:
+        unique_together = (("species", "target", "position"),)
+
+
+# Model for gRNAs
+class GuideRNA(models.Model):
+    target_hit = models.ForeignKey(TargetHit, null=True)
     pam = models.ForeignKey(PAM, null=True)
-    nuclease = models.ForeignKey(Nuclease, null=True)
 
     grna = models.CharField(max_length=20, null=True)
 
-    # Position of found gRNA in Genome and/or Target sequence.
-    genome_position = models.BigIntegerField(default=-1, null=True)
-    target_position = models.BigIntegerField(default=-1, null=True)
+    # Position of found gRNA in Genome
+    # gRNA position is Target is calculated from TargetHit's position
+    # and gRNA position in Genmee.
+    position = models.BigIntegerField(default=-1, null=True)
 
     class Meta:
-        unique_together = (("species", "nuclease", "target",
-                            "pam"),)
+        unique_together = (("target_hit", "pam", "position"),)
 
     def __str__(self):
         return self.grna
