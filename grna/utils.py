@@ -1,6 +1,10 @@
 import sys
 import tempfile
+import regex as re
+
 from Bio import SearchIO
+from Bio.Seq import Seq
+from Bio.Alphabet import generic_dna
 
 from subprocess import Popen
 from subprocess import PIPE
@@ -11,9 +15,13 @@ from .models import *
 class GuideRNAManager:
 
     # Global private attributes
+    # The default guide RNA spacer length.
+    _spacer_length = 20
+
     _initialised = False
 
     # Instances of the selected model objects
+    _nuclease = None
     _species = None
     _target = None
     _pam = None
@@ -114,21 +122,40 @@ class GuideRNAManager:
                 print "HSP SCORE:", hsp.score'''
 
             length = hit[0].hit_end - hit[0].hit_start
-            print "LENGTH", float(length)
+            print "LENGTH", float(length), hit[0].hit_start, hit[0].hit_end
+
             # Strand on HSPFragment, meaning: 0: 5-3, 1: 3-5
             strand = hit[0][0].hit_strand
 
             # hsp = hit[0]
             # hsp.match_num/length
-            score = hit[0].match_num/float(length)
-            print "SCORE", score
+            hit_score = hit[0].match_num/float(length)
+
+            upstream = int(self._target.upstream)
+            downstream = int(self._target.downstream)
+            genome_length = int(self._species.length)
+            print "SCORE", hit_score
+
+            # TODO: check the genome boundaries.
+            # If hit start smaller then upstream then the start must be 0.
+            if hit[0].hit_start < upstream:
+                target_position = 0
+            else:
+                target_position = hit[0].hit_start - upstream
+
+            # If hit_end + downstream larger than size of genom the length
+            # should be the genome length - hit start
+            if (hit[0].hit_end + downstream) > genome_length:
+                target_length = genome_length - target_position
+            else:
+                target_length = length + downstream + downstream
 
             hit_model = TargetHit.objects.create(species=self._species,
                                                  target=self._target,
-                                                 position=hit[0].hit_start,
+                                                 position=target_position,
                                                  strand=strand,
-                                                 score=score,
-                                                 length=length)
+                                                 score=hit_score,
+                                                 length=target_length)
 
             hit_model.save()
 
@@ -138,13 +165,14 @@ class GuideRNAManager:
 
         if self._initialised:
             raise Exception("The GuideRNABioutisl should be singleton")
+
         species_id = request.POST['species']
         target = request.POST['target']
-        pam_id = request.POST['pam']
+        pam_id = int(request.POST['pam'])
         upstream = request.POST['upstream']
         downstream = request.POST['downstream']
         is_nickase = request.POST['is_nickase']
-
+        nuclease_id = request.POST['nuclease']
         # Steps are the following:
         # 1. Get the Species object
         # TODO: Restructure PAM based on Nucleases are used
@@ -157,11 +185,13 @@ class GuideRNAManager:
 
         # 2.
         # -1 means all PAM should be used for search gRNA
+        self._nuclease = Nuclease.objects.get(pk=nuclease_id)
 
-        if (pam_id<0):
-            self._pam = PAM.objects.all()
+        # print "PAM ID", pam_id, type(pam_id)
+        if pam_id < 0:
+            self._pam = PAM.objects.filter(nuclease=nuclease_id)
         else:
-            self._pam = PAM.objects.get(pk=pam_id)
+            self._pam = PAM.objects.filter(nuclease=nuclease_id, pk=pam_id)
 
         # 3. Create target model from the seqeuence
         self._target = Target()
@@ -207,16 +237,102 @@ class GuideRNAManager:
 
         # TODO: Only searches in the target hits of the genome
         for hit in TargetHit.objects.filter(species=self._species,
-                                             target=self._target):
-            print "HIT STRAND", hit.strand
-            target_start = hit.position
-            target_end = hit.position+hit.length
-            query_sequence = query_record.seq[target_start:target_end]
+                                            target=self._target):
+            # print "HIT STRAND", hit.strand
+            if hit.strand == 1:
+                first_strand = 'plus'
+                second_strand = 'minus'
+            else:
+                first_strand = 'minus'
+                second_strand = 'plus'
 
-            print "HINT", hit, target_start, target_end
+            hit_start = hit.position
+            hit_end = hit.position+hit.length
+
+            # print "HINT", hit, hit_start, hit_end, hit.length,
+            # hit_end-hit_start
 
             # TODO: Check the sequence with the BLAT result of the query.
             # PSLX format should be used for above check.
-            print "QSEQ", query_sequence  # Reverse
 
-            print "TSEQ", target_record.seq
+            # The sequenc is extended by upstream and downstream.
+            # query_sequence = query_record.seq[hit_start:hit_end]
+
+            pam_patterns = self._build_pams(self._pam, hit.strand)
+
+            # Find PAMs in + strand
+            self._find_pams(hit, query_record.seq, hit_start, hit_end,
+                            first_strand, pam_patterns)
+
+            # Find PAMs in - strand
+            self._find_pams(hit, query_record.seq, hit_start, hit_end,
+                            second_strand, pam_patterns)
+
+    def _build_pams(self, pams, strand):
+        # The result is an dict with pams in regex for each strand e.g.
+        result = {}
+
+        plus_array = [str(pam).replace('N', '.') for pam in pams]
+        minus_array = [str(Seq(str(pam), generic_dna).reverse_complement()
+                           ).replace('N', '.') for pam in pams]
+
+        plus_pattern = '(?=(' + '|'.join(plus_array) + '))'
+        minus_pattern = '(?=(' + '|'.join(minus_array) + '))'
+
+        if strand == 1:
+            result['plus'] = plus_pattern
+            result['minus'] = minus_pattern
+        else:
+            # TODO: Check and unit test this.
+            result['minus'] = plus_pattern
+            result['plus'] = minus_pattern
+
+        print "DICT", result
+
+        return result
+
+    # TODO: Currently, only supports the same length PAMs. e.g NAG ANG NGG etc.
+    def _find_pams(self, hit, query_sequence, start, end, strand, patterns):
+
+        PAM_LENGTH = 3  # TODO: Should be the length of PAM
+
+        if strand == 'plus':
+            spacer_start = -self._spacer_length
+            spacer_end = 0
+        else:
+            spacer_start = PAM_LENGTH
+            spacer_end = PAM_LENGTH + self._spacer_length
+
+        print "PATTERNS", str(patterns[strand])
+        pam_pattern = re.compile(patterns[strand])
+
+        for match in re.finditer(pam_pattern, str(query_sequence[start:end]),
+                                 overlapped=True):
+
+            pos = match.start(0)
+
+            grna_start = start+pos+spacer_start
+            grna_end = start+pos+spacer_end
+
+            spacer = query_sequence[grna_start:grna_end]
+            pam = match.group(1)
+
+            # test_pam = query_sequence[pam_start:pam_end]
+
+            # The position is the start of guide RNA sequence on the + strain
+            # and NOT the position of PAM.
+            # Last Minus entry
+            # PSO CCGGGAGGAAGGAGCCGGCGAGA 444409 444432
+            # GUIDERNA GGAGGAAGGAGCCGGCGAGA CCG 5968
+            #
+            # Lasts + strand
+            # GUIDERNA AAAGAGATTTACCGGGAGGA AGG 5977
+
+            grna = GuideRNA.objects.create(nuclease=self._nuclease,
+                                           target_hit=hit,
+                                           pam_sequence=pam,
+                                           spacer=spacer, position=grna_start)
+
+            grna.save()
+
+            # print "GUIDERNA", spacer, pam, pos #, test_pam

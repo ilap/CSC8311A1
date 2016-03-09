@@ -1,11 +1,10 @@
 Design Guide RNA - CSC8311 Assignment (20015/2016) README file
 ==============================================================
 
-
 This tool for the CSC8311 Assignment is developed by Django with Python and 
 Biopython. 
 
-It try to find guide RNA in a sequence similar to the target sequence in a 
+It tries to find guide RNA in a sequence similar to the target sequence in a 
 genome and stores the results in database. 
 
 Firstly, the query sequence (genome of a species where we want to find gRNAs) 
@@ -17,7 +16,6 @@ finds the prospective guide RNAs in the hits based on the PAM sequence
 selected on the main page. 
 
 Currenlty, only the wild-type *blunt* Cas9 is supported.
-
 
 Requirements
 ============
@@ -37,6 +35,10 @@ The other requirements are the following:
 - Biopython 1.65 -- see http://biopython.org/wiki/Main_Page
 
   Biological tool written in Python and used for the assignment.
+
+- Python new regex module - see https://pypi.python.org/pypi/regex
+
+  To install run _sudo pip install regex_
 
 
 
@@ -76,16 +78,19 @@ Run the site:
        python manage.py runserver
             Starting development server at **http://127.0.0.1:8000/**
        
-Access it using browser opening the IP:port showed above.
+Access it using browser opening the IP:port showed above, and then proceed 
+the following steps below:
 
--- Select the species genome,
--- Insert the target sequence to find honologous sequence in the selected 
-genome.
--- Choose the up/down stream offset for extending the search range by 
+1. Select the species genome (currently only _B. Subtillis strain 168_),
+2. Insert the target sequence to the _Species_ text area to find homologous 
+sequence in the selected genome. For testing, the *amyE* gene of *B. 
+subtillis* fasta file (_amyE_B_Subtilis_strain_168.fa_) can be found under 
+./sequence directory.
+3. Choose the up/down stream offset for extending the search range by 
 the offset in the genome. The 0 means, that the search will be run only on the 
 exact length of the found target sequence.
--- Seelct PAM
--- And finally clikc the *Search gRNA* button.
+4. Select PAM sequence
+5. And finally click the **_Search gRNA_** button.
 
 See, screenshot below:
 
@@ -94,8 +99,16 @@ See, screenshot below:
 Testing
 =======
 
-**Not yet implemented**
+Run the following command to run test unit for grna.
 
+      python manage.py  test
+      Creating test database for alias 'default'...
+      ...
+      ----------------------------------------------------------------------
+      Ran 3 tests in 0.006s
+
+      OK
+      Destroying test database for alias 'default'...
 
 Distribution Structure
 ======================

@@ -19,15 +19,15 @@ class GuideRNAView(View):
         print "GET request"
         form = self.form_class()
         species = Species.objects.all()
-        nucleases = Nuclease.objects.all()
-        pams = PAM.objects.all()
+        nuclease = Nuclease.objects.get(name='Cas9')
+        pams = PAM.objects.filter(nuclease=nuclease)
 
         print species
-        print nucleases
+        print nuclease
         print pams
         return render(request, self.template_new, {'form': form,
                                                    'species': species,
-                                                   'nucleases': nucleases,
+                                                   'nuclease': nuclease,
                                                    'pams': pams, })
 
     def post(self, request):
@@ -45,16 +45,16 @@ class GuideRNAView(View):
             #    return HttpResponseRedirect(reverse('views.upload'))
             # return render(request, self.template_new, {})
         elif request.POST.get('search'):
-            print "DO stuffs"
-            for i in request.POST:
-                print "POOOOST:", i, request.POST[i]
+
+            # DEBUG for i in request.POST:
+            # DEBUG    print "POOOOST:", i, request.POST[i]
 
             grna_utils = GuideRNAManager().initialise_run(request)
 
             content = grna_utils.search_grna()
-            print "CONTENT: ", content
+
             return render(request, self.template_results, {'content':
-                                                               content, })
+                                                            content, })
 
 
 def grna_results(request):

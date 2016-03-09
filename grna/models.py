@@ -134,15 +134,18 @@ class GuideRNA(models.Model):
     target_hit = models.ForeignKey(TargetHit, null=True)
     pam = models.ForeignKey(PAM, null=True)
 
-    grna = models.CharField(max_length=20, null=True)
+    nuclease = models.ForeignKey(Nuclease, null=True)
+
+    pam_sequence = models.CharField(max_length=20, null=True)
+    spacer = models.CharField(max_length=20, null=True)
 
     # Position of found gRNA in Genome
     # gRNA position is Target is calculated from TargetHit's position
-    # and gRNA position in Genmee.
+    # and gRNA position in Genome.
     position = models.BigIntegerField(default=-1, null=True)
 
     class Meta:
-        unique_together = (("target_hit", "pam", "position"),)
+        unique_together = (("target_hit", "pam_sequence", "position"),)
 
     def __str__(self):
-        return self.grna
+        return self.spacer

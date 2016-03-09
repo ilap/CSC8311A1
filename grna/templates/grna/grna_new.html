@@ -29,6 +29,9 @@ http://www.chidgilovitz.com/displaying-django-form-field-help-text-in-a-bootstra
 <form id="query_form" class="form-horizontal" method="post"
       enctype="multipart/form-data">
     {% csrf_token %}
+    <!-- Hidden parameter -->
+    <input type="hidden" value="{{ nuclease.id }}" name="nuclease"
+           id="nuclease">
     <!-- Species selection list -->
     <div class="form-group">
         <label class="col-md-3 control-label">Species:</label>
@@ -82,6 +85,7 @@ http://www.chidgilovitz.com/displaying-django-form-field-help-text-in-a-bootstra
     <div class="form-group">
         <label class="col-md-3 control-label">PAM:</label>
         <div class="col-md-3">
+            <input type="hidden" value="{{ nuclease.id }}" name="nuclease">
             <select class="form-control" name="pam">
                 {% for pam in pams %}
                 <option value="{{ pam.id }}">{{ pam.pam }}</option>
@@ -115,6 +119,5 @@ http://www.chidgilovitz.com/displaying-django-form-field-help-text-in-a-bootstra
                 gRNA</button>
         </div>
     </div>
-<div>
 </form>
 {% endblock %}
