@@ -87,6 +87,10 @@ exact length of the found target sequence.
 -- Seelct PAM
 -- And finally clikc the *Search gRNA* button.
 
+See, screenshot below:
+
+![Screenshot](./misc/Screenshot.png?raw=true "Screnshot of Design gRNA Tool")
+
 Testing
 =======
 
@@ -97,7 +101,6 @@ Distribution Structure
 ======================
 
 - README       -- This file.
-
 - mysite/      -- The Django ROOT site.
 - grna/        -- The Design gRNA (grna) tool site.
 - db.sqlite3   -- The databese for the grna.
