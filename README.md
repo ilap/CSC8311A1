@@ -28,7 +28,7 @@ The other requirements are the following:
 
   The primary develompent platform for Design gRNA tool.
   
-- Python 2.7 -- see http://www.python.org
+- Python 2.7.x -- see http://www.python.org
 
   Django requires python for development.
   
@@ -54,13 +54,41 @@ Dependencies
 - git - standalone for installing Design gRNA by cloning it from github, see 
 https://git-scm.com/downloads
 
+- pip - Django and BioPython requires _pip_ to be installed.
+ 
+- python-dev - Biopython requires _python-dev_ package to be installed on Ubuntu
+
+- regex - gRNA tool requires the new regular expression library _regex_.
+
 Installation and use
 ======================
 
 Firts, **make sure that proper version of Python, Django, git standalone and 
 Biopython are 
 installed correctly**. Then, installation can be done by unpakcaging  
-gzipped tar or clone from github.
+gzipped tar or clone from github. See example below to install grna 
+and its requirements in Ubuntu.
+
+Install requirements and dependencies:
+
+        $ python --version
+        Python 2.7.6
+        
+        $ sudo apt-get update
+        
+        $ sudo apt-get install git
+              
+        $ ﻿sudo apt-get install python-pip
+       
+        $ sudo apt-get install python-dev 
+        
+        $ sudo pip install Django==1.9.3
+        Downloading/unpacking Django==1.9.3
+       
+        $ sudo pip install Biopython==1.65
+        Downloading/unpacking Biopython==1.65
+        
+        $ sudo pip install regex
 
 Installation from github:
   

@@ -75,8 +75,8 @@ class GuideRNAManager:
             sys.platform != "win32"))
 
         stdout, stderr = blat.communicate()
-        # print "STDOUT", stdout
-        # print "STDERR", stderr
+        #print "STDOUT", stdout
+        #print "STDERR", stderr
         if stderr:
             raise Exception("blat had error during run.")
 
