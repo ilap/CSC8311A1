@@ -132,20 +132,33 @@ class TargetHit(models.Model):
 # Model for gRNAs
 class GuideRNA(models.Model):
     target_hit = models.ForeignKey(TargetHit, null=True)
-    pam = models.ForeignKey(PAM, null=True)
 
     nuclease = models.ForeignKey(Nuclease, null=True)
 
-    pam_sequence = models.CharField(max_length=20, null=True)
+    pam_seq  = models.CharField(max_length=20, null=True)
+    pam_seq_c = models.CharField(max_length=20, null=True)
+
+    # Guide RNA Target/Spacer Sequence
     spacer = models.CharField(max_length=20, null=True)
+    spacer_c = models.CharField(max_length=20, null=True)
+
+    # Up/donw stream sequence of guide RNA
+    up_seq = models.CharField(max_length=20, null=True)
+    up_seq_c = models.CharField(max_length=20, null=True)
+    down_seq = models.CharField(max_length=20, null=True)
+    down_seq_c = models.CharField(max_length=20, null=True)
 
     # Position of found gRNA in Genome
     # gRNA position is Target is calculated from TargetHit's position
     # and gRNA position in Genome.
-    position = models.BigIntegerField(default=-1, null=True)
+    cut_position = models.BigIntegerField(default=-1, null=True)
+
+    # is the Guide RNA on sense/plus strand?
+    is_sense_strand = models.BooleanField(default=True)
 
     class Meta:
-        unique_together = (("target_hit", "pam_sequence", "position"),)
+        unique_together = (("target_hit", "pam_seq", "cut_position", "spacer"),)
 
     def __str__(self):
         return self.spacer
+

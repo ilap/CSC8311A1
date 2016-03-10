@@ -33,6 +33,9 @@ class GuideRNAManager:
     # List of the target gene/sequence found in the genome.
     _hits = None
 
+    # Stream offset for visualising the found gRNA
+    _stream_offset = 10
+
     def __init__(self):
 
         self._arch = sys.platform
@@ -47,10 +50,8 @@ class GuideRNAManager:
             self._blat = "blat_macos"
             # Mac OS X
         else:
-            raise Exception('Platform {} is not currently supported. '
+            raise Exception('Platform {} is not currently supported.'
                             'Exiting.'.format(self._arch))
-
-        # Initial BLAT parameters
 
     # Run Blat on Species model
     def _run_blat(self):
@@ -75,13 +76,16 @@ class GuideRNAManager:
             sys.platform != "win32"))
 
         stdout, stderr = blat.communicate()
-        #print "STDOUT", stdout
-        #print "STDERR", stderr
+        # print "STDOUT", stdout
+        # print "STDERR", stderr
+
         if stderr:
             raise Exception("blat had error during run.")
 
         blat_qresult = SearchIO.read(output, 'blat-{}'.format(out_format))
-        print blat_qresult
+
+        # DEBUG: Blat result
+        # print blat_qresult
 
         # http://biopython.org/DIST/docs/tutorial/Tutorial.html
         # Create TargetHit models from the BLAT results.
@@ -122,7 +126,9 @@ class GuideRNAManager:
                 print "HSP SCORE:", hsp.score'''
 
             length = hit[0].hit_end - hit[0].hit_start
-            print "LENGTH", float(length), hit[0].hit_start, hit[0].hit_end
+            # DEBUG
+            # print "LENGTH", float(length), hit[0].hit_start,
+            # hit[0].hit_end
 
             # Strand on HSPFragment, meaning: 0: 5-3, 1: 3-5
             strand = hit[0][0].hit_strand
@@ -134,7 +140,7 @@ class GuideRNAManager:
             upstream = int(self._target.upstream)
             downstream = int(self._target.downstream)
             genome_length = int(self._species.length)
-            print "SCORE", hit_score
+            # DEBUG print "SCORE", hit_score
 
             # TODO: check the genome boundaries.
             # If hit start smaller then upstream then the start must be 0.
@@ -216,8 +222,8 @@ class GuideRNAManager:
 
         query_file = self._species.fasta_file.path
         target_file = self._target.sequence_file.path
-        print "QUERY", query_file
-        print "TARGET", target_file
+        # DEBUG print "QUERY", query_file
+        # DEBUG print "TARGET", target_file
 
         # TODO: Only one FASTA record is allowed from the query and target.
         query_record = SeqIO.read(query_file, "fasta")
@@ -268,6 +274,11 @@ class GuideRNAManager:
             self._find_pams(hit, query_record.seq, hit_start, hit_end,
                             second_strand, pam_patterns)
 
+            # Result the TargetHits and the GuideRNAs
+            target_hits = TargetHit.objects.filter(species=self._species,
+                                                            target=self._target)
+            return target_hits
+
     def _build_pams(self, pams, strand):
         # The result is an dict with pams in regex for each strand e.g.
         result = {}
@@ -287,7 +298,7 @@ class GuideRNAManager:
             result['minus'] = plus_pattern
             result['plus'] = minus_pattern
 
-        print "DICT", result
+        # DEBUG print "DICT", result
 
         return result
 
@@ -299,6 +310,7 @@ class GuideRNAManager:
         if strand == 'plus':
             spacer_start = -self._spacer_length
             spacer_end = 0
+
         else:
             spacer_start = PAM_LENGTH
             spacer_end = PAM_LENGTH + self._spacer_length
@@ -310,29 +322,102 @@ class GuideRNAManager:
                                  overlapped=True):
 
             pos = match.start(0)
-
-            grna_start = start+pos+spacer_start
-            grna_end = start+pos+spacer_end
-
-            spacer = query_sequence[grna_start:grna_end]
             pam = match.group(1)
 
-            # test_pam = query_sequence[pam_start:pam_end]
+            grna_start = start + pos+spacer_start
+            grna_end = start + pos+spacer_end
 
-            # The position is the start of guide RNA sequence on the + strain
-            # and NOT the position of PAM.
-            # Last Minus entry
-            # PSO CCGGGAGGAAGGAGCCGGCGAGA 444409 444432
-            # GUIDERNA GGAGGAAGGAGCCGGCGAGA CCG 5968
-            #
-            # Lasts + strand
-            # GUIDERNA AAAGAGATTTACCGGGAGGA AGG 5977
+            # 1. PAM
+            ###
+            # For comparison
+            found_pam_seq = match.group(1)
+
+            # TODO: make PAM length variable.
+            temp_pam_seq = match.group(1)
+            pam_seq = query_sequence[start + pos:start + pos + PAM_LENGTH]
+            pam_seq_c = str(Seq(pam, generic_dna).complement())
+
+            if temp_pam_seq != pam:
+                assert Exception("PAM not the same.")
+
+            # 2. SPacer/Target sequence
+            ###
+            test_spacer_seq = query_sequence[grna_start:grna_end]
+            spacer = str(test_spacer_seq)
+            spacer_c = str(Seq(spacer, generic_dna).complement())
+
+            # 3. Up/Down stream
+            ###
+            if strand == 'plus':
+                # cut position is always calculated from the sense strand
+                cut_position = start + pos - self._nuclease.cut_offset
+                up_seq_end = grna_start
+                down_seq_start = start + pos+PAM_LENGTH
+            else:
+                cut_position = start + pos+self._nuclease.cut_offset
+                up_seq_end = start + pos
+                down_seq_start = grna_end
+
+            up_seq_start = up_seq_end-self._stream_offset
+            down_seq_end = down_seq_start + self._stream_offset
+
+            # _c means complement
+            up_seq = str(query_sequence[up_seq_start:up_seq_end])
+            up_seq_c = str(Seq(up_seq, generic_dna).complement())
+
+            down_seq = str(query_sequence[down_seq_start:down_seq_end])
+            down_seq_c = str(Seq(down_seq, generic_dna).complement())
+
+            # DEBUG
+            # if strand == 'plus':
+            #    print "POS,SEQ", pam_seq, query_sequence[
+            #                          start+pos-30:start+pos+3+10]
+            # else:
+            #    print "POS,SEQ", pam_seq, query_sequence[
+            #                          start+pos-10:start+pos+3+20+10]
 
             grna = GuideRNA.objects.create(nuclease=self._nuclease,
                                            target_hit=hit,
-                                           pam_sequence=pam,
-                                           spacer=spacer, position=grna_start)
+                                           pam_seq=pam_seq,
+                                           pam_seq_c=pam_seq_c,
+                                           spacer=spacer,
+                                           spacer_c=spacer_c,
+                                           up_seq=up_seq,
+                                           up_seq_c=up_seq_c,
+                                           down_seq=down_seq,
+                                           down_seq_c=down_seq_c,
+                                           cut_position=cut_position,
+                                           is_sense_strand=int(strand ==
+                                                               'plus'))
 
             grna.save()
 
-            # print "GUIDERNA", spacer, pam, pos #, test_pam
+        '''
+        # DEBUG print "GUIDERNA", "STRAND", pam_seq, strand
+        if strand == 'plus':
+            print grna.target_hit
+            # Debug found sequence
+            print "+ Seq:"
+            print grna.up_seq, grna.spacer, grna.pam_seq, grna.down_seq
+
+            print "- Seq:"
+            print grna.up_seq_c, grna.spacer_c, grna.pam_seq_c, grna.down_seq_r
+            print "POS", start+pos, grna.cut_position
+            print "Is sense/+", grna.is_sense_strand
+
+            print "SEQUENCE"
+            print query_sequence[grna.cut_position-26:grna.cut_position+17]
+        else:
+            print grna.target_hit
+            # Debug found sequence
+            print "+ Seq:"
+            print grna.up_seq, grna.pam_seq, grna.spacer,  grna.down_seq
+
+            print "- Seq:"
+            print grna.up_seq_c, grna.pam_seq_c, grna.spacer_c,  grna.down_seq_r
+            print "POS", start+pos, grna.cut_position
+            print "Is sense/+", grna.is_sense_strand
+
+            print "SEQUENCE"
+            print query_sequence[grna.cut_position-14:grna.cut_position+29]
+            '''

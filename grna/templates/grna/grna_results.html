@@ -1,8 +1,51 @@
 {% extends 'grna/base.html' %}
+{% load grna_extras %}
+{% load humanize %}
 
 {% block content %}
-        <div class="grna">
-            <p>Results of newly created gRNA....... XXXXX</p>
 
-        </div>
+    <div>
+        <h3>Matches for
+            <i>{{ target.name }}</i> in species <i>{{ species.name }}</i></h3>
+    </div>
+    {% for hit in hits %}
+    <table class="table table-hover">
+        <!-- Header -->
+        <thead>
+            <tr>
+                <th>Position</th>
+                <th>Guide RNA</th>
+                <th>Hit Position</th>
+                <th>Hit Score</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Rows -->
+
+            {% for grna in grnas|in_hits:hit %}
+            <tr>
+                <td>{{ grna.cut_position }}</td>
+                <td>
+                    <!-- Fomrat gRNA -->
+                    {% if   grna.is_sense_strand == True %}
+                    <b>+</b>&nbsp;<span class="dna">{{ grna.up_seq}}</span><span class="spacer">{{ grna.spacer }}</span><span class="pam">{{ grna.pam_seq }}</span><span class="dna">{{ grna.down_seq }}</span>
+                    </br>
+                    <b>-</b>&nbsp;<span class="dna_disabled">{{ grna.up_seq_c}}{{ grna.pam_seq_c }}{{ grna.spacer_c }}{{ grna.down_seq_c }}</span>
+                    </br>
+                    {% else %}
+                    <b>+</b>&nbsp;<span class="dna_disabled">{{ grna.up_seq}}{{ grna.pam_seq }}{{ grna.spacer }}{{ grna.down_seq }}</span>
+                    </br>
+                    <b>-</b>&nbsp;<span class="dna">{{ grna.up_seq_c }}</span><span class="pam">{{ grna.pam_seq_c }}</span><span class="spacer">{{ grna.spacer_c }}</span><span class="dna">{{ grna.down_seq_c }}</span>
+                    {% endif %}
+
+                    <!-- End format of gRNA -->
+                </td>
+                <td>{{ hit.position }}</td>
+                <td> {{ hit.score|percentage }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+        {% endfor %}
+
 {% endblock content %}

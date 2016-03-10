@@ -122,7 +122,8 @@ exact length of the found target sequence.
 
 See, screenshot below:
 
-![Screenshot](./misc/Screenshot.png?raw=true "Screnshot of Design gRNA Tool")
+![Screenshot](./misc/Screenshot.png?raw=true "Screenshot of Design gRNA Tool")
+![Screenshot1](./misc/Screenshot1.png?raw=true "Result's screenshot of Design gRNA Tool")
 
 Testing
 =======

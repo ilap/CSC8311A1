@@ -23,3 +23,24 @@ label {
     font-weight: normal;
     font-family: 'Open Sans', 'Roboto Condensed';
 }
+
+span.pam {
+    background-color: #FFE87C;
+    color: #888888
+}
+
+span.spacer {
+    background-color: #6AFB92;
+    color: #888888
+}
+
+span.dna {
+    background-color: #F5F4F2;
+    color: #AAAAAA
+}
+
+span.dna_disabled {
+    background-color: #F5F4F2;
+    color: #AAAAAA
+}
+

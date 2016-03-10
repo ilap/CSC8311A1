@@ -1,10 +1,10 @@
 from django.shortcuts import render
 from django.views.generic import View
+from django import template
 
 from .forms import *
 from .models import *
 from .utils import GuideRNAManager
-
 
 class GuideRNAView(View):
     form_class = SpeciesForm
@@ -51,11 +51,17 @@ class GuideRNAView(View):
 
             grna_utils = GuideRNAManager().initialise_run(request)
 
-            content = grna_utils.search_grna()
+            #try:
+            hits = grna_utils.search_grna()
+            grnas = GuideRNA.objects.all()
+            species = grna_utils._species
+            target = grna_utils._target
+            #except:
+            #    raise Exception("Find guide RNA in as species is failed.")
 
-            return render(request, self.template_results, {'content':
-                                                            content, })
-
+            return render(request, self.template_results,
+                              {'species':species, 'hits':hits, 'grnas':grnas,
+                               'target':target})
 
 def grna_results(request):
     # if request.method == "POST":
