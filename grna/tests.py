@@ -6,7 +6,7 @@ from .models import PAM
 from Bio.Seq import Seq
 from Bio.Alphabet import generic_dna
 
-
+# It test the regex of the PAMs
 class PAMTestCase(TestCase):
 
     def setUp(self):

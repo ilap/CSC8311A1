@@ -11,8 +11,11 @@ tfs = FileSystemStorage(location='grna/targets')
 gfs = FileSystemStorage(location='grna/genomes')
 
 
-# Create your models here.
-# Target sequence to find gRNA in a genome of a species
+
+# Target is a model for target sequences or gene sequences for searching guide
+# RNAs in similar or homologous sequence in a genome.
+# One genome can have more than one genes or homologoues sequences and the
+# TargetHit models (see further below) is the model for those founds/hits.
 class Target(models.Model):
 
     # TODO: handle the unique targets.
@@ -63,7 +66,9 @@ class Target(models.Model):
         self.save()
 
 
-# Genome of a species to find gRNAs by target sequence(s)
+# Species is the model of the species genom where the guide RNAs will be
+# searched in the Hits (see detail in TargetHit model further below) in the
+# chose genome of  species.
 class Species(models.Model):
 
     name = models.CharField(max_length=100, unique=True)
@@ -76,22 +81,35 @@ class Species(models.Model):
         return self.name
 
 
-# Model for CRISPR/Cas9 or CRISPR/Cpf1 endonucleases
+# Model for CRISPR/Cas9 or CRISPR/Cpf1 endonucleases which binds to the
+# specific sequence (PAM) in the genome and cleavage the DNA.
 class Nuclease(models.Model):
     name = models.CharField(max_length=10, default='Cas9')
+
+    # Nickase means create nicks instead of a blunt cut of the fully
+    # functional Cas9 enzyme.
     is_nickase = models.BooleanField(default=True)
 
+    # The spacer sequence of the guide RNA relative to the PAM sequence it
+    # can be either right up or down next to PAM sequence.
     is_downstream = models.BooleanField(default=True)
+
+    # Where the enzyme cuts the DNA, it can be upstream or downstream
+    # relative to the PAM sequence
     cut_offset = models.PositiveIntegerField(validators=[MinValueValidator(
-        1)], null=True)
+        -10)], null=True)
 
     def __str__(self):
         return self.name
 
 
-# Model for PAM (Protospacer Adjacent Motif)
+# Model for PAM (Protospacer Adjacent Motif) sequence where the Cas9/Cpf1
+# endonuclease binds and cleavage the DNA
 class PAM(models.Model):
     nuclease = models.ForeignKey(Nuclease)
+
+    # The regex of the PAM sequence of the specified nuclease for example
+    # NGG, NAG, or NNGNNGG, whihc depends on the enzyme.
     pam = models.CharField(max_length=20)
 
     class Meta:
@@ -101,14 +119,24 @@ class PAM(models.Model):
         return self.pam
 
 
-# Model for Target Hits in the genome
+# Model for Target Hits
+# Target hits the sequences similar to the target (gene or any selected)
+# sequence in the query sequence (genome).
+# More than one homologous of the target can be found in the queried genome,
+# therefore the guide RNAs must be found in these finds (hits)
+# In default the homology is set to 90% in the BLAT whihc finds homologous
+# sequences (here the target sequences) in a query sequence (here the species
+# genome)
 class TargetHit(models.Model):
+    # The species object where the target is found.
     species = models.ForeignKey(Species, null=True)
+
+    # The original target object
     target = models.ForeignKey(Target, null=True)
 
     length = models.BigIntegerField(default=-1, null=True)
 
-    # Target position in genome of species if exists
+    # Target position in genome if exists
     position = models.BigIntegerField(default=-1, null=True, validators=[
         MinValueValidator(-1)])
 
@@ -129,20 +157,26 @@ class TargetHit(models.Model):
         unique_together = (("species", "target", "position"),)
 
 
-# Model for gRNAs
+# Model for Guid RNAs found in similar sequence to the target gene/sequence
+#  in the genome of specified species.
 class GuideRNA(models.Model):
+    # The target hit (the homologous gene or other sequence(s) of the queried
+    # genome/sequence).
     target_hit = models.ForeignKey(TargetHit, null=True)
 
+    # The used endonuclease for generating guide RNAs
     nuclease = models.ForeignKey(Nuclease, null=True)
 
+    # PAM sequence of the guide RNA
     pam_seq  = models.CharField(max_length=20, null=True)
     pam_seq_c = models.CharField(max_length=20, null=True)
 
-    # Guide RNA Target/Spacer Sequence
+    # Guide RNA Target/Spacer Sequence, the nuclease cut the DNA based on
+    # this sequences.
     spacer = models.CharField(max_length=20, null=True)
     spacer_c = models.CharField(max_length=20, null=True)
 
-    # Up/donw stream sequence of guide RNA
+    # Up/down stream sequence relative to the guide RNA (PAM + spacer)
     up_seq = models.CharField(max_length=20, null=True)
     up_seq_c = models.CharField(max_length=20, null=True)
     down_seq = models.CharField(max_length=20, null=True)

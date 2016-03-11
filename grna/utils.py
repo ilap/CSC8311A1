@@ -11,7 +11,7 @@ from subprocess import PIPE
 
 from .models import *
 
-
+# The worker class for searching guide RNAs in the genome/query sequence.
 class GuideRNAManager:
 
     # Global private attributes
@@ -53,7 +53,8 @@ class GuideRNAManager:
             raise Exception('Platform {} is not currently supported.'
                             'Exiting.'.format(self._arch))
 
-    # Run Blat on Species model
+    # Run Blat on the target sequence (gene) against the query sequence (
+    # genome of a species)
     def _run_blat(self):
 
         if not self._initialised:
@@ -167,6 +168,8 @@ class GuideRNAManager:
 
             return True
 
+    # Initialisation function to initialise the instance based on the
+    # resulted request of the main page.
     def initialise_run(self, request):
 
         if self._initialised:
