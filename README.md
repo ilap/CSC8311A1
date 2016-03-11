@@ -78,7 +78,7 @@ Install requirements and dependencies:
         
         $ sudo apt-get install git
               
-        $ ﻿sudo apt-get install python-pip
+        $ sudo apt-get install python-pip
        
         $ sudo apt-get install python-dev 
         
@@ -110,15 +110,20 @@ Access it using browser opening the IP:port showed above, and then proceed
 the following steps below:
 
 1. Select the species genome (currently only _B. Subtillis strain 168_),
-2. Insert the target sequence to the _Species_ text area to find homologous 
-sequence in the selected genome. For testing, the *amyE* gene of *B. 
-subtillis* fasta file (_amyE_B_Subtilis_strain_168.fa_) can be found under 
-./sequence directory.
-3. Choose the up/down stream offset for extending the search range by 
-the offset in the genome. The 0 means, that the search will be run only on the 
-exact length of the found target sequence.
-4. Select PAM sequence
-5. And finally click the **_Search gRNA_** button.
+
+2. Insert the target sequence to the Species text area to find homologous sequence in the selected genome.
+   For testing, copy and paste the contain of the  *amyE* gene of *B. 
+subtillis* fasta file (amyE_B_Subtilis_strain_168.fa).
+3. Choose the up/down stream offset for extending the search range by the offset in the genome.
+   The 0 means, that the search will be run only on the exact length of the found target sequence.
+   The deafult (2000) means that the search will start 2000 nucleotides upstream and finish at 2000 nucleotides
+   downstream of the selected gene in the genome.
+4. Select PAM sequence. Currently, just some of the wild-type Cas9's PAMs (NGG and NAG) are added to the database.
+5. And finally click the **__Search gRNA__** button.
+
+The result (see screenshots) should be the list of the found guide RNAs in the 
+genom, based on the target sequence. There is any statistical analysis in 
+this base assignment.
 
 See, screenshot below:
 
