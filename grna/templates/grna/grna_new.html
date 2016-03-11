@@ -26,9 +26,14 @@ http://plnkr.co/edit/fAedI6CCurweavYN5iNS?p=preview
 http://getbootstrap.com/javascript/#tabs
 http://www.chidgilovitz.com/displaying-django-form-field-help-text-in-a-bootstrap-3-popover/
 -->
+
 <form id="query_form" class="form-horizontal" method="post"
       enctype="multipart/form-data">
     {% csrf_token %}
+    {% if error %}
+        <p style="color: red;">Please submit valid values to proceed.</p>
+    {% endif %}
+
     <!-- Hidden parameter -->
     <input type="hidden" value="{{ nuclease.id }}" name="nuclease"
            id="nuclease">

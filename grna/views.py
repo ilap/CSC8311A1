@@ -1,6 +1,9 @@
 from django.shortcuts import render
 from django.views.generic import View
-from django import template
+from django.shortcuts import render_to_response
+
+from django.template import Context
+from django.template import RequestContext
 
 from .forms import *
 from .models import *
@@ -15,20 +18,17 @@ class GuideRNAView(View):
         super(View, self).__init__()
         self.grna_utils = GuideRNAManager()
 
+
     def get(self, request):
         print "GET request"
         form = self.form_class()
         species = Species.objects.all()
         nuclease = Nuclease.objects.get(name='Cas9')
         pams = PAM.objects.filter(nuclease=nuclease)
-
-        print species
-        print nuclease
-        print pams
         return render(request, self.template_new, {'form': form,
-                                                   'species': species,
-                                                   'nuclease': nuclease,
-                                                   'pams': pams, })
+                   'species': species,
+                   'nuclease': nuclease,
+                   'pams': pams, })
 
     def post(self, request):
         print "POST request"
@@ -48,27 +48,33 @@ class GuideRNAView(View):
 
             # DEBUG for i in request.POST:
             # DEBUG    print "POOOOST:", i, request.POST[i]
+            # Some erro handling
+            try:
+                grna_utils = GuideRNAManager().initialise_run(request)
+                hits = grna_utils.search_grna()
+                grnas = GuideRNA.objects.all()
+                species = grna_utils._species
+                target = grna_utils._target
+            except:
+                error = True
+                form = self.form_class()
+                species = Species.objects.all()
+                nuclease = Nuclease.objects.get(name='Cas9')
+                pams = PAM.objects.filter(nuclease=nuclease)
+                return render(request, self.template_new, {'form': form,
+                               'species': species,
+                               'nuclease': nuclease,
+                               'pams': pams,
+                                'error':error})
 
-            grna_utils = GuideRNAManager().initialise_run(request)
 
-            #try:
-            hits = grna_utils.search_grna()
-            grnas = GuideRNA.objects.all()
-            species = grna_utils._species
-            target = grna_utils._target
-            #except:
-            #    raise Exception("Find guide RNA in as species is failed.")
+
 
             return render(request, self.template_results,
                               {'species':species, 'hits':hits, 'grnas':grnas,
                                'target':target})
 
 def grna_results(request):
-    # if request.method == "POST":
-    print "GRNA RESULTS...."
-    for i in request.POST:
-        print "POOOOST:", i, request.POST[i]
-
     # import time
     # time.sleep (60)
     return render(request, 'grna/grna_results.html', {})
