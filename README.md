@@ -122,7 +122,7 @@ subtillis* fasta file (amyE_B_Subtilis_strain_168.fa).
 5. And finally click the **__Search gRNA__** button.
 
 The result (see screenshots) should be the list of the found guide RNAs in the 
-genom, based on the target sequence. There is any statistical analysis in 
+genome, based on the target sequence. There is **NO** any statistical analysis in 
 this base assignment.
 
 See, screenshot below:
